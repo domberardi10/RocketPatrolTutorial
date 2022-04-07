@@ -6,6 +6,7 @@ class Play extends Phaser.Scene {
         this.load.image('rocket', './assets/rocket.png');
         this.load.image('spaceship', './assets/spaceship.png');
         this.load.image('starfield', './assets/starfield.png');
+        this.load.spritesheet('explosion', './assets/explosion.png', {frameWidth: 64, frameHeight: 32, startFrame: 0, endFrame: 9});
     }
     create() {
         //tile sprite
@@ -33,6 +34,13 @@ class Play extends Phaser.Scene {
         this.ship01 = new Spaceship(this, game.config.width + borderUISize * 6, borderUISize * 4, 'spaceship', 0, 30).setOrigin(0, 0);
         this.ship02 = new Spaceship(this, game.config.width + borderUISize * 3, borderUISize * 5 + borderPadding * 2, 'spaceship', 0, 20).setOrigin(0, 0);
         this.ship03 = new Spaceship(this, game.config.width, borderUISize * 6 + borderPadding * 4, 'spaceship', 0, 10).setOrigin(0, 0);
+
+        //explosion animation
+        this.anims.create({
+            key: 'explode',
+            frames: this.anims.generateFrameNumbers('explosion', { start: 0, end: 9, first: 0 }),
+            frameRate: 30
+        });
     }
     update() {
         //move starfield
@@ -46,12 +54,15 @@ class Play extends Phaser.Scene {
         //check collisions every frame
         if (this.checkCollision(this.p1rocket, this.ship03)){
             this.p1rocket.reset();
+            this.shipExplode(this.ship03);
         }
         if (this.checkCollision(this.p1rocket, this.ship02)){
             this.p1rocket.reset();
+            this.shipExplode(this.ship02);
         }
         if (this.checkCollision(this.p1rocket, this.ship01)){
             this.p1rocket.reset();
+            this.shipExplode(this.ship01);
         }
 
     }
@@ -63,5 +74,22 @@ class Play extends Phaser.Scene {
         else{
             return false;
         }
+    }
+    shipExplode(ship) {
+        //makes ship invisible temporarily
+        ship.alpha = 0;
+        //create explosion animation at ship position
+        let boom = this.add.sprite(ship.x, ship.y, 'explosion').setOrigin(0, 0);
+        //play explode animation
+        boom.anims.play('explode');
+        //callback after animation completes
+        boom.on('animationcomplete', () => {
+            //reset ship pos
+            ship.reset();
+            //make ship visible again
+            ship.alpha = 1;
+            //remove explosion animation
+            boom.destroy();
+        });
     }
 }
