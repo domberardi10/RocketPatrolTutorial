@@ -41,16 +41,49 @@ class Play extends Phaser.Scene {
             frames: this.anims.generateFrameNumbers('explosion', { start: 0, end: 9, first: 0 }),
             frameRate: 30
         });
+
+        //Init player score
+        this.p1Score = 0;
+        //display score
+        let scoreConfig = {
+            fontFamily: 'Courier',
+            fontSize: '28px',
+            backgroundColor: '#F3B141',
+            color: '#843605',
+            align: 'right',
+            padding: {
+                top: 5,
+                bottom: 5,
+            },
+            fixedWidth: 100
+        }
+        this.scoreLeft = this.add.text(borderUISize + borderPadding, borderUISize + borderPadding * 2, this.p1Score, scoreConfig);
+
+        //GAME OVER flag
+        this.gameOver = false;
+        //60 second play clock
+        scoreConfig.fixedWidth = 0;
+        this.clock = this.time.delayedCall(60000, () => {
+            this.add.text(game.config.width / 2, game.config.height / 2, 'GAME OVER', scoreConfig).setOrigin(0.5);
+            this.add.text(game.config.width / 2, game.config.height / 2 + 64, 'Press (R) to Restart', scoreConfig).setOrigin(0.5);
+            this.gameOver = true;
+        }, null, this);
+
     }
     update() {
+        //check for restart input
+        if (this.gameOver && Phaser.Input.Keyboard.JustDown(keyR)) {
+            this.scene.restart();
+        }
         //move starfield
         this.starfield.tilePositionX -= 4;
-        //rocket control update
-        this.p1rocket.update();
-        //update spaceships
-        this.ship01.update();
-        this.ship02.update();
-        this.ship03.update();
+        //game over update (stops ships and rocket)
+        if (!this.gameOver) {
+            this.p1rocket.update();
+            this.ship01.update();
+            this.ship02.update();
+            this.ship03.update();
+        }
         //check collisions every frame
         if (this.checkCollision(this.p1rocket, this.ship03)){
             this.p1rocket.reset();
@@ -91,5 +124,8 @@ class Play extends Phaser.Scene {
             //remove explosion animation
             boom.destroy();
         });
+        //score addition and repaint score text
+        this.p1Score += ship.points;
+        this.scoreLeft.text = this.p1Score;
     }
 }
